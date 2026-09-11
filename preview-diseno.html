@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vista previa - Nuevo diseño VirtuallCorp</title>
+<style>
+  :root {
+    --bg:        #FAFAFA;
+    --panel:     #FFFFFF;
+    --borde:     #E4E4E7;
+    --texto:     #18181B;
+    --texto-sec: #71717A;
+    --texto-ter: #A1A1AA;
+    --acento:    #14215E;
+    --acento-suave: #EEF0F9;
+    --verde:     #16A34A;
+    --verde-bg:  #F0FDF4;
+    --rojo:      #DC2626;
+    --rojo-bg:   #FEF2F2;
+    --ambar:     #D97706;
+    --ambar-bg:  #FFFBEB;
+    --radio:     10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif; background: var(--bg); color: var(--texto); -webkit-font-smoothing: antialiased; }
+
+  .layout { display: flex; min-height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { width: 240px; background: var(--panel); border-right: 1px solid var(--borde); padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+  .sidebar-logo { font-size: 16px; font-weight: 700; padding: 0 10px; margin-bottom: 4px; letter-spacing: -0.3px; color: var(--acento); }
+  .sidebar-sub { font-size: 12px; color: var(--texto-ter); padding: 0 10px; margin-bottom: 28px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: var(--texto-sec); font-size: 13.5px; font-weight: 500; cursor: pointer; transition: all .15s; text-decoration: none; }
+  .nav-item:hover { background: var(--acento-suave); color: var(--texto); }
+  .nav-item.activo { background: var(--acento); color: white; }
+  .nav-icon { width: 16px; height: 16px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .nav-sep { height: 1px; background: var(--borde); margin: 14px 6px; }
+  .nav-label-sec { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--texto-ter); padding: 0 10px; margin: 10px 0 6px; }
+
+  .sidebar-user { margin-top: auto; padding: 12px 10px; border-top: 1px solid var(--borde); display: flex; align-items: center; gap: 10px; }
+  .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--acento); color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .user-info { flex: 1; min-width: 0; }
+  .user-nombre { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .user-rol { font-size: 11px; color: var(--texto-ter); }
+
+  /* ── MAIN ── */
+  .main { flex: 1; padding: 32px 40px; max-width: 1280px; }
+
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 12px; }
+  .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
+  .page-sub { font-size: 13px; color: var(--texto-sec); margin-top: 2px; }
+  .btn { padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--borde); background: white; color: var(--texto); transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn:hover { border-color: var(--acento); color: var(--acento); }
+  .btn-primario { background: var(--acento); color: white; border-color: var(--acento); }
+  .btn-primario:hover { opacity: 0.85; color: white; }
+
+  /* ── STATS ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--panel); border: 1px solid var(--borde); border-radius: var(--radio); padding: 20px 22px; }
+  .stat-label { font-size: 12.5px; color: var(--texto-sec); font-weight: 500; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: baseline; }
+  .stat-total { font-size: 11px; color: var(--texto-ter); font-weight: 600; }
+  .stat-valor { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  .stat-valor.verde { color: var(--verde); }
+  .stat-valor.rojo { color: var(--rojo); }
+  .stat-fila { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; font-size: 13px; }
+  .stat-fila + .stat-fila { border-top: 1px solid var(--borde); }
+  .stat-fila .lbl { color: var(--texto-sec); }
+  .stat-fila .val { font-weight: 700; }
+  .btn-ver-mas { width: 100%; margin-top: 12px; padding: 8px; background: transparent; border: 1px solid var(--borde); border-radius: 7px; color: var(--texto-sec); font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
+  .btn-ver-mas:hover { border-color: var(--acento); color: var(--acento); background: var(--acento-suave); }
+
+  /* ── FILTROS ── */
+  .filtros-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+  .chip { padding: 7px 14px; border-radius: 20px; border: 1px solid var(--borde); background: white; font-size: 12.5px; font-weight: 600; color: var(--texto-sec); cursor: pointer; transition: all .15s; }
+  .chip:hover { border-color: var(--acento); color: var(--acento); }
+  .chip.activo { background: var(--acento); color: white; border-color: var(--acento); }
+  .select-min { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--borde); background: white; font-size: 13px; color: var(--texto); outline: none; }
+
+  /* ── TABLA ── */
+  .panel-card { background: var(--panel); border: 1px solid var(--borde); border-radius: var(--radio); overflow: hidden; }
+  .panel-card-hdr { padding: 18px 22px; border-bottom: 1px solid var(--borde); display: flex; justify-content: space-between; align-items: center; }
+  .panel-card-titulo { font-size: 14.5px; font-weight: 700; }
+  .panel-card-cnt { font-size: 12.5px; color: var(--texto-sec); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead th { text-align: left; padding: 12px 22px; font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--texto-ter); border-bottom: 1px solid var(--borde); }
+  tbody td { padding: 14px 22px; border-bottom: 1px solid var(--borde); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--acento-suave); }
+
+  .badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11.5px; font-weight: 600; }
+  .badge-verde { background: var(--verde-bg); color: var(--verde); }
+  .badge-ambar { background: var(--ambar-bg); color: var(--ambar); }
+  .badge-neutro { background: var(--acento-suave); color: var(--texto-sec); }
+
+  .avatar-mini { width: 24px; height: 24px; border-radius: 50%; background: var(--acento-suave); color: var(--texto-sec); display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; margin-right: 8px; vertical-align: middle; }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">VirtuallCorp</div>
+    <div class="sidebar-sub">Sistema de Ventas</div>
+
+    <a class="nav-item activo">
+      <span class="nav-icon">&#9632;</span> Panel Principal
+    </a>
+    <a class="nav-item">
+      <span class="nav-icon">&#128197;</span> Cronograma
+    </a>
+    <a class="nav-item">
+      <span class="nav-icon">&#128176;</span> Ingresos / Egresos
+    </a>
+    <a class="nav-item">
+      <span class="nav-icon">&#128202;</span> Reportes
+    </a>
+
+    <div class="nav-sep"></div>
+    <div class="nav-label-sec">Administración</div>
+    <a class="nav-item">
+      <span class="nav-icon">&#128101;</span> Usuarios
+    </a>
+    <a class="nav-item">
+      <span class="nav-icon">&#9881;</span> Permisos
+    </a>
+
+    <div class="sidebar-user">
+      <div class="user-avatar">VC</div>
+      <div class="user-info">
+        <div class="user-nombre">Admin VirtuallCorp</div>
+        <div class="user-rol">Administrador</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <div class="page-header">
+      <div>
+        <div class="page-title">Panel Principal</div>
+        <div class="page-sub">Resumen de ventas en vivo y web</div>
+      </div>
+      <button class="btn btn-primario">&#8635; Actualizar datos</button>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total registros</div>
+        <div class="stat-valor">128</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Resumen financiero</div>
+        <div class="stat-fila"><span class="lbl">Ingresos</span><span class="val verde">Bs 24.500</span></div>
+        <div class="stat-fila"><span class="lbl">Egresos</span><span class="val rojo">Bs 6.200</span></div>
+        <div class="stat-fila"><span class="lbl">Utilidad</span><span class="val">Bs 18.300</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Top área <span class="stat-total">128 total</span></div>
+        <div class="stat-fila"><span class="lbl">Derecho</span><span class="val">34</span></div>
+        <div class="stat-fila"><span class="lbl">Medicina</span><span class="val">28</span></div>
+        <div class="stat-fila"><span class="lbl">Marketing</span><span class="val">19</span></div>
+        <div class="stat-fila"><span class="lbl">Ingeniería</span><span class="val">14</span></div>
+        <div class="stat-fila"><span class="lbl">Contaduría</span><span class="val">11</span></div>
+        <button class="btn-ver-mas">Ver todas las áreas &#8594;</button>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Top curso <span class="stat-total">128 total</span></div>
+        <div class="stat-fila"><span class="lbl">Ley INRA</span><span class="val">21</span></div>
+        <div class="stat-fila"><span class="lbl">Excel Avanzado</span><span class="val">17</span></div>
+        <div class="stat-fila"><span class="lbl">Marketing Digital</span><span class="val">14</span></div>
+        <div class="stat-fila"><span class="lbl">Derecho Penal</span><span class="val">12</span></div>
+        <div class="stat-fila"><span class="lbl">Contabilidad I</span><span class="val">9</span></div>
+        <button class="btn-ver-mas">Ver todos los cursos &#8594;</button>
+      </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filtros-bar">
+      <span class="chip activo">Juntas</span>
+      <span class="chip">En Vivo</span>
+      <span class="chip">Web</span>
+      <span style="width:1px;height:20px;background:var(--borde)"></span>
+      <span class="chip activo">7 días</span>
+      <span class="chip">30 días</span>
+      <span class="chip">90 días</span>
+      <span class="chip">Todos</span>
+      <span style="flex:1"></span>
+      <select class="select-min"><option>Todos los vendedores</option></select>
+      <select class="select-min"><option>Todos los turnos</option></select>
+    </div>
+
+    <!-- TABLA -->
+    <div class="panel-card">
+      <div class="panel-card-hdr">
+        <span class="panel-card-titulo">Registros de ventas</span>
+        <span class="panel-card-cnt">128 registros · mostrando 1-8</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Vendedor</th><th>Fecha</th><th>Nombre</th><th>Curso</th><th>Monto</th><th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="avatar-mini">A</span>Alvaro</td>
+            <td>29/06/2026</td>
+            <td>Lic. Alfredo Gil Masais</td>
+            <td>Ley INRA</td>
+            <td>Bs 120</td>
+            <td><span class="badge badge-verde">Verificado</span></td>
+          </tr>
+          <tr>
+            <td><span class="avatar-mini">M</span>Mariela</td>
+            <td>29/06/2026</td>
+            <td>Jiovana Valencia Pinto</td>
+            <td>Excel Avanzado</td>
+            <td>Bs 95</td>
+            <td><span class="badge badge-ambar">Pendiente</span></td>
+          </tr>
+          <tr>
+            <td><span class="avatar-mini">S</span>Susana Rojas</td>
+            <td>28/06/2026</td>
+            <td>Carla Mendez Soliz</td>
+            <td>Marketing Digital</td>
+            <td>Bs 140</td>
+            <td><span class="badge badge-verde">Verificado</span></td>
+          </tr>
+          <tr>
+            <td><span class="avatar-mini">M</span>Mafer</td>
+            <td>28/06/2026</td>
+            <td>Roberto Quispe Lima</td>
+            <td>Derecho Penal</td>
+            <td>Bs 160</td>
+            <td><span class="badge badge-neutro">Web</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

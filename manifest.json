@@ -1,0 +1,18 @@
+{
+  "name": "VirtuallCorp - Sistema de Ventas",
+  "short_name": "VC Ventas",
+  "description": "Panel de gestión de ventas VirtuallCorp",
+  "start_url": "./admin.html",
+  "display": "standalone",
+  "background_color": "#1E3A8A",
+  "theme_color": "#1E3A8A",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

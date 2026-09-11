@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Inscripción - VirtuallCorp</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root {
+    --bg: #FAFAFA; --panel: #FFFFFF; --borde: #E4E4E7;
+    --texto: #18181B; --texto-sec: #71717A;
+    --acento: #14215E; --acento-suave: #EEF0F9;
+    --verde: #16A34A; --verde-bg: #F0FDF4;
+    --rojo: #DC2626; --rojo-bg: #FEF2F2;
+    --ambar-bg: #FFFBEB; --ambar: #D97706;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--texto); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .card { background: var(--panel); border: 1px solid var(--borde); border-radius: 14px; padding: 36px 32px; width: 100%; max-width: 480px; }
+  .logo { font-size: 20px; font-weight: 700; color: var(--acento); text-align: center; }
+  .sub { font-size: 13px; color: var(--texto-sec); text-align: center; margin-top: 4px; margin-bottom: 8px; }
+  .info-form { background: var(--acento-suave); border-radius: 8px; padding: 12px 14px; text-align: center; margin-bottom: 24px; font-size: 13px; color: var(--acento); font-weight: 600; }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--texto-sec); margin-bottom: 6px; }
+  .label-nota { font-size: 11px; font-weight: 400; color: var(--texto-sec); margin-top: 2px; margin-bottom: 6px; font-style: italic; }
+  input[type="text"], input[type="email"], select, textarea {
+    width: 100%; padding: 11px 13px; border: 1px solid var(--borde); border-radius: 8px;
+    font-size: 14px; outline: none; margin-bottom: 16px; font-family: inherit;
+    background: white; color: var(--texto);
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--acento); }
+  input.error-field, select.error-field, textarea.error-field { border-color: var(--rojo); }
+  textarea { resize: vertical; min-height: 80px; }
+  .radio-grupo { display: flex; gap: 20px; margin-bottom: 16px; font-size: 14px; }
+  .radio-grupo label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; font-weight: 400; color: var(--texto); margin-bottom: 0; }
+  button { width: 100%; padding: 12px; background: var(--acento); color: white; border: none; border-radius: 8px; font-size: 14.5px; font-weight: 600; cursor: pointer; margin-top: 4px; }
+  button:hover { opacity: .9; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .msg { margin-top: 16px; padding: 12px 14px; border-radius: 8px; font-size: 13px; display: none; }
+  .msg.error { background: var(--rojo-bg); color: var(--rojo); display: block; }
+  .campo-comentario { background: var(--ambar-bg); border-radius: 10px; padding: 14px; margin-bottom: 16px; border-left: 4px solid var(--ambar); display: none; }
+  .campo-comentario label { color: var(--ambar); }
+  .campo-comentario textarea { margin-bottom: 0; border-color: var(--ambar); }
+  .campo-comentario textarea:focus { border-color: var(--ambar); }
+  .exito { text-align: center; display: none; }
+  .exito-icono { font-size: 44px; margin-bottom: 14px; }
+  .exito-titulo { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .exito-texto { font-size: 13.5px; color: var(--texto-sec); line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div id="vista-form">
+    <div class="logo">VirtuallCorp</div>
+    <div class="sub">Formulario de Inscripción</div>
+    <div class="info-form" id="info-vendedor">Cargando...</div>
+
+    <label>Nombres y apellidos *</label>
+    <input type="text" id="f-nombres" placeholder="Tu nombre completo">
+
+    <label>Ciudad *</label>
+    <select id="f-ciudad">
+      <option value="">-- Selecciona tu ciudad --</option>
+      <option>La Paz</option>
+      <option>Santa Cruz</option>
+      <option>Cochabamba</option>
+      <option>Tarija</option>
+      <option>Sucre</option>
+      <option>Potosí</option>
+      <option>Oruro</option>
+      <option>Beni</option>
+      <option>Pando</option>
+    </select>
+
+    <label>Carnet de Identidad *</label>
+    <input type="text" id="f-ci" placeholder="CI">
+
+    <label>Celular *</label>
+    <input type="text" id="f-celular" placeholder="70000000">
+
+    <label>Correo electrónico *</label>
+    <input type="text" id="f-correo" placeholder="correo@ejemplo.com o dato de contacto">
+
+    <label>N° de Transacción (del pago) *</label>
+    <input type="text" id="f-numtrans" placeholder="Código de tu transacción">
+
+    <div id="campos-nit" style="display:none">
+      <label>Nombre o Razón Social o Datos de la Factura (opcional)</label>
+      <input type="text" id="f-razon" placeholder="Nombre, empresa o datos de factura">
+      <label>NIT o CI (opcional)</label>
+      <input type="text" id="f-nit" placeholder="NIT o número de CI">
+    </div>
+
+    <label>¿Cómo fue tu atención? *</label>
+    <select id="f-atencion" onchange="onAtencionChange()">
+      <option value="">-- Selecciona --</option>
+      <option value="😍 Excelente">😍 Excelente</option>
+      <option value="😊 Buena">😊 Buena</option>
+      <option value="😐 Regular">😐 Regular</option>
+      <option value="😕 Mala">😕 Mala</option>
+      <option value="😡 Pésima">😡 Pésima</option>
+    </select>
+
+    <div class="campo-comentario" id="bloque-comentario">
+      <label>¿Por qué elegiste esa puntuación? *</label>
+      <textarea id="f-comentario-atencion" placeholder="Cuéntanos qué pasó para poder mejorar..."></textarea>
+    </div>
+
+    <label>¿Deseas recibir notificaciones? *</label>
+    <div class="label-nota">Por WhatsApp o correo de ofertas o nuevos cursos</div>
+    <div class="radio-grupo">
+      <label>
+        <input type="radio" name="f-notif" id="f-notif-si" value="Sí" style="accent-color:#14215E;width:16px;height:16px"> Sí
+      </label>
+      <label>
+        <input type="radio" name="f-notif" id="f-notif-no" value="No" style="accent-color:#14215E;width:16px;height:16px"> No
+      </label>
+    </div>
+
+    <button id="btn-enviar" onclick="enviarRegistro()">Enviar Registro</button>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="exito" id="vista-exito">
+    <div class="exito-icono">✅</div>
+    <div class="exito-titulo">¡Registro enviado!</div>
+    <div class="exito-texto">Gracias por inscribirte. En breve nuestro equipo se pondrá en contacto para confirmar tu pago y los datos del curso.</div>
+  </div>
+</div>
+
+<script>
+  // Reemplaza con las credenciales de TU proyecto Supabase (Settings > API)
+  var SUPABASE_URL     = 'https://tu-proyecto.supabase.co';
+  var SUPABASE_ANON_KEY = 'TU_SUPABASE_ANON_KEY_AQUI';
+  var supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function getParam(nombre) {
+    return new URLSearchParams(window.location.search).get(nombre);
+  }
+
+  var vendedorId     = getParam('v');
+  var vendedorNombre = getParam('n') || 'Vendedor';
+  var turno          = getParam('t') || 'Manana';
+  var conNit         = getParam('nit') === '1';
+  var turnoLabel     = { Manana: 'Mañana', Tarde: 'Tarde', Noche: 'Noche' }[turno] || turno;
+
+  document.getElementById('info-vendedor').textContent = 'Asesor: ' + vendedorNombre + ' · Turno: ' + turnoLabel;
+  if (conNit) document.getElementById('campos-nit').style.display = 'block';
+
+  function onAtencionChange() {
+    var val = document.getElementById('f-atencion').value;
+    var necesitaComentario = val === '😕 Mala' || val === '😡 Pésima';
+    document.getElementById('bloque-comentario').style.display = necesitaComentario ? 'block' : 'none';
+    if (!necesitaComentario) document.getElementById('f-comentario-atencion').value = '';
+  }
+
+  function esEmailValido(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  function marcarError(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.add('error-field');
+  }
+
+  function limpiarErrores() {
+    document.querySelectorAll('.error-field').forEach(function(el){ el.classList.remove('error-field'); });
+  }
+
+  function mostrarMsg(texto) {
+    var el = document.getElementById('msg');
+    el.textContent = texto;
+    el.className = 'msg error';
+  }
+
+  function enviarRegistro() {
+    if (!vendedorId) { mostrarMsg('Este link no es válido. Pide al asesor que te comparta el link correcto.'); return; }
+
+    limpiarErrores();
+
+    var nombres  = document.getElementById('f-nombres').value.trim();
+    var ciudad   = document.getElementById('f-ciudad').value;
+    var ci       = document.getElementById('f-ci').value.trim();
+    var celular  = document.getElementById('f-celular').value.trim();
+    var correo   = document.getElementById('f-correo').value.trim();
+    var numtrans = document.getElementById('f-numtrans').value.trim();
+    var atencion = document.getElementById('f-atencion').value;
+    var notifEl  = document.querySelector('input[name="f-notif"]:checked');
+    var notif    = notifEl ? notifEl.value : '';
+    var comentario = document.getElementById('f-comentario-atencion').value.trim();
+    var necesitaComentario = atencion === '😕 Mala' || atencion === '😡 Pésima';
+
+    var errores = [];
+    if (!nombres)  { errores.push('Completa tu nombre completo'); marcarError('f-nombres'); }
+    if (!ciudad)   { errores.push('Selecciona tu ciudad'); marcarError('f-ciudad'); }
+    if (!ci)       { errores.push('Ingresa tu carnet de identidad'); marcarError('f-ci'); }
+    if (!celular)  { errores.push('Ingresa tu número de celular'); marcarError('f-celular'); }
+    if (!correo)   { errores.push('Ingresa tu correo electrónico'); marcarError('f-correo'); }
+    if (!numtrans) { errores.push('Ingresa el número de transacción'); marcarError('f-numtrans'); }
+    // razon social y NIT son opcionales aunque se muestre el bloque
+    if (!atencion) { errores.push('Indica cómo fue tu atención'); marcarError('f-atencion'); }
+    if (necesitaComentario && !comentario) { errores.push('Cuéntanos por qué elegiste esa puntuación'); marcarError('f-comentario-atencion'); }
+    if (!notif)    { errores.push('Indica si deseas recibir notificaciones'); }
+
+    if (errores.length) { mostrarMsg(errores[0]); return; }
+
+    var atencionFinal = necesitaComentario ? atencion + ' | Motivo: ' + comentario : atencion;
+
+    var btn = document.getElementById('btn-enviar');
+    btn.disabled = true; btn.textContent = 'Enviando...';
+
+    var registro = {
+      vendedor_id:        vendedorId,
+      vendedor_nombre:    vendedorNombre,
+      turno:              turno,
+      tipo:               'vivo',
+      nombres:            nombres,
+      ciudad:             ciudad,
+      ci:                 ci,
+      celular:            celular,
+      correo:             correo,
+      numero_transaccion: numtrans,
+      razon_social:       conNit ? document.getElementById('f-razon').value.trim() : '',
+      nit:                conNit ? document.getElementById('f-nit').value.trim() : '',
+      atencion_cliente:   atencionFinal,
+      notificaciones:     notif,
+      monto:              129,
+      verificado:         false
+    };
+
+    supa.from('ventas').insert(registro).then(function(r) {
+      if (r.error) {
+        btn.disabled = false; btn.textContent = 'Enviar Registro';
+        mostrarMsg('Error al enviar. Intenta de nuevo.');
+        return;
+      }
+      document.getElementById('vista-form').style.display = 'none';
+      document.getElementById('vista-exito').style.display = 'block';
+    });
+  }
+</script>
+
+</body>
+</html>

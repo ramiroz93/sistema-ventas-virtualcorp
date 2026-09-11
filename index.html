@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VirtuallCorp - Sistema de Ventas</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1E3A8A">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #312E81 100%);
+      padding: 24px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 24px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+    }
+
+    .logo {
+      font-size: 36px;
+      font-weight: 900;
+      color: #FFFFFF;
+      letter-spacing: -1px;
+      margin-bottom: 6px;
+    }
+
+    .subtitulo {
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 48px;
+    }
+
+    .pregunta {
+      font-size: 15px;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 18px 24px;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      margin-bottom: 14px;
+      transition: transform .15s, box-shadow .15s;
+    }
+
+    .btn:hover  { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .btn:active { transform: scale(0.98); }
+
+    .btn-supervisor {
+      background: linear-gradient(135deg, #1E3A8A, #2563EB);
+      color: #FFFFFF;
+    }
+
+    .btn-admin {
+      background: linear-gradient(135deg, #312E81, #7C3AED);
+      color: #FFFFFF;
+    }
+
+    .btn-texto { text-align: left; }
+    .btn-titulo { display: block; font-size: 16px; }
+    .btn-sub    { display: block; font-size: 12px; opacity: 0.75; font-weight: 400; margin-top: 2px; }
+    .btn-icono  { font-size: 28px; }
+
+    .footer {
+      margin-top: 40px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">VirtuallCorp</div>
+    <div class="subtitulo">Sistema de Ventas</div>
+
+    <p class="pregunta">¿Con qué perfil ingresás?</p>
+
+    <a href="supervisor.html" class="btn btn-supervisor">
+      <div class="btn-texto">
+        <span class="btn-titulo">Panel Supervisor</span>
+        <span class="btn-sub">Ver todas las ventas</span>
+      </div>
+      <span class="btn-icono">📊</span>
+    </a>
+
+    <a href="admin.html" class="btn btn-admin">
+      <div class="btn-texto">
+        <span class="btn-titulo">Panel Administrador</span>
+        <span class="btn-sub">Gestión completa y reportes</span>
+      </div>
+      <span class="btn-icono">🔐</span>
+    </a>
+
+    <div class="footer">VirtuallCorp &copy; 2025</div>
+  </div>
+</body>
+</html>

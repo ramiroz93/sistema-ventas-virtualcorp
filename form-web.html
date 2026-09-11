@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inscripción al Curso — VirtuallCorp</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 24px 16px;
+    color: #1F2937;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    max-width: 600px;
+    margin: 0 auto;
+    overflow: hidden;
+  }
+  .card-hdr {
+    background: linear-gradient(90deg, #6366F1, #8B5CF6);
+    padding: 28px 32px;
+    color: white;
+  }
+  .card-hdr h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .card-hdr p { font-size: 13.5px; opacity: 0.85; }
+  .card-body { padding: 28px 32px; }
+  .step-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: #8B5CF6; margin-bottom: 18px;
+  }
+  .form-field { margin-bottom: 16px; }
+  .form-field label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+  .form-field input, .form-field select {
+    width: 100%; padding: 10px 13px;
+    border: 1.5px solid #E5E7EB; border-radius: 8px;
+    font-size: 14px; font-family: inherit; outline: none;
+    transition: border-color .15s;
+  }
+  .form-field input:focus, .form-field select:focus { border-color: #8B5CF6; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+  .btn {
+    display: inline-block; padding: 12px 28px; border: none;
+    border-radius: 8px; font-size: 14.5px; font-weight: 600;
+    cursor: pointer; transition: opacity .15s; font-family: inherit;
+  }
+  .btn:hover { opacity: .85; }
+  .btn-primary { background: #6366F1; color: white; width: 100%; margin-top: 8px; }
+  .btn-secondary { background: #F3F4F6; color: #374151; }
+  .pregunta-card {
+    background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px;
+    padding: 18px; margin-bottom: 14px;
+  }
+  .pregunta-txt { font-size: 14px; font-weight: 600; color: #1F2937; margin-bottom: 12px; }
+  .opcion-label {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 13px; border-radius: 8px; cursor: pointer;
+    border: 1.5px solid #E5E7EB; margin-bottom: 7px;
+    font-size: 13.5px; transition: background .12s, border-color .12s;
+  }
+  .opcion-label:hover { background: #EEF2FF; border-color: #A5B4FC; }
+  .opcion-label input[type=radio] { accent-color: #6366F1; width: 16px; height: 16px; flex-shrink: 0; }
+  .opcion-label.seleccionada { background: #EEF2FF; border-color: #6366F1; }
+  .opcion-label.correcta { background: #DCFCE7; border-color: #86EFAC; color: #15803D; }
+  .opcion-label.incorrecta { background: #FEF2F2; border-color: #FCA5A5; color: #B91C1C; }
+  .progress-bar-wrap { background: #E5E7EB; border-radius: 99px; height: 6px; margin-bottom: 20px; }
+  .progress-bar { height: 6px; border-radius: 99px; background: linear-gradient(90deg,#6366F1,#8B5CF6); transition: width .3s; }
+  .resultado-box {
+    text-align: center; padding: 36px 24px;
+  }
+  .resultado-score { font-size: 56px; font-weight: 800; line-height: 1; }
+  .resultado-score.aprobado { color: #15803D; }
+  .resultado-score.reprobado { color: #B91C1C; }
+  .resultado-label { font-size: 14px; color: #6B7280; margin-top: 6px; margin-bottom: 16px; }
+  .resultado-msg { font-size: 14.5px; background: #F3F4F6; border-radius: 10px; padding: 14px 18px; color: #374151; }
+  .error-box { color: #B91C1C; background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 13.5px; }
+  .loading { text-align: center; padding: 40px; color: #6B7280; font-size: 14px; }
+  .badge-curso { display: inline-block; background: #EEF2FF; color: #4338CA; font-size: 12px; font-weight: 700; padding: 3px 11px; border-radius: 20px; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<div class="card" id="app">
+  <div class="loading">Cargando...</div>
+</div>
+
+<script>
+// Reemplaza con las credenciales de TU proyecto Supabase (Settings > API)
+var SUPA_URL = 'https://tu-proyecto.supabase.co';
+var SUPA_KEY = 'TU_SUPABASE_ANON_KEY_AQUI';
+var supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+var _cursoId    = null;
+var _curso      = null;
+var _preguntas  = [];
+var _formData   = {};
+var _respuestas = {};
+var _ventaWebId = null;
+var _vendedorId = null;
+
+function getParam(name) {
+  return new URLSearchParams(window.location.search).get(name);
+}
+
+function render(html) {
+  document.getElementById('app').innerHTML = html;
+}
+
+function init() {
+  _vendedorId = getParam('v') || null;
+  _cursoId = getParam('curso');
+  if (!_cursoId) { renderError('URL inválida: falta el parámetro de curso.'); return; }
+  supa.from('cursos').select('*, areas(nombre)').eq('id', _cursoId).single().then(function(r) {
+    if (r.error || !r.data) { renderError('Curso no encontrado. Verifica el link de inscripción.'); return; }
+    _curso = r.data;
+    renderStep1();
+  });
+}
+
+function renderError(msg) {
+  render('<div class="card-hdr"><h1>&#9888; Error</h1></div><div class="card-body"><div class="error-box">' + msg + '</div></div>');
+}
+
+function renderStep1() {
+  var areaNom = (_curso.areas && _curso.areas.nombre) ? _curso.areas.nombre : '';
+  render(
+    '<div class="card-hdr">' +
+      '<h1>&#128218; Inscripción al Curso</h1>' +
+      '<p>Completa tus datos para inscribirte</p>' +
+      '<span class="badge-curso">' + escHtml(_curso.nombre) + (areaNom ? ' &middot; ' + escHtml(areaNom) : '') + '</span>' +
+    '</div>' +
+    '<div class="card-body">' +
+      '<div class="step-label">Paso 1 de 2 — Tus datos</div>' +
+      '<div class="progress-bar-wrap"><div class="progress-bar" style="width:50%"></div></div>' +
+      '<div class="form-grid">' +
+        '<div class="form-field" style="grid-column:1/-1"><label>Nombre completo *</label><input type="text" id="f-nombres" placeholder="Tu nombre completo" autocomplete="name"></div>' +
+        '<div class="form-field"><label>Celular *</label><input type="tel" id="f-celular" placeholder="Ej: 70012345" autocomplete="tel"></div>' +
+        '<div class="form-field"><label>Correo electrónico *</label><input type="email" id="f-correo" placeholder="correo@ejemplo.com" autocomplete="email"></div>' +
+        '<div class="form-field"><label>Ciudad</label><select id="f-ciudad"><option value="">-- Selecciona tu ciudad --</option><option>La Paz</option><option>Santa Cruz</option><option>Tarija</option><option>Cochabamba</option><option>Sucre</option><option>Pando</option><option>Beni</option><option>Potosí</option><option>Oruro</option></select></div>' +
+        '<div class="form-field" style="grid-column:1/-1"><label>N° Transacción / Comprobante de pago</label><input type="text" id="f-numtrans" placeholder="Ej: 123456789"></div>' +
+      '</div>' +
+      '<div id="step1-error"></div>' +
+      '<button class="btn btn-primary" onclick="enviarStep1()">Continuar &#8594;</button>' +
+    '</div>'
+  );
+}
+
+function enviarStep1() {
+  var nombres  = val('f-nombres').trim();
+  var celular  = val('f-celular').trim();
+  var correo   = val('f-correo').trim();
+  var ciudad   = val('f-ciudad');
+  var numtrans = val('f-numtrans').trim();
+
+  if (!nombres) { showStepErr('El nombre es obligatorio.'); return; }
+  if (!celular) { showStepErr('El celular es obligatorio.'); return; }
+  if (!correo || !/\S+@\S+\.\S+/.test(correo)) { showStepErr('Ingresa un correo válido.'); return; }
+
+  _formData = { nombres: nombres, celular: celular, correo: correo, ciudad: ciudad || null,
+    numero_transaccion: numtrans || null,
+    area: _curso.areas ? _curso.areas.nombre : null,
+    curso: _curso.nombre, curso_id: _cursoId };
+
+  supa.from('preguntas_web').select('*').eq('curso_id', _cursoId).then(function(r) {
+    var todas = (r.error ? [] : (r.data || []));
+    if (!todas.length) {
+      guardarInscripcion(0, 0, function() { renderResultado(null, 0, 0); });
+      return;
+    }
+    // random 10
+    var mezcladas = todas.slice().sort(function(){ return Math.random() - .5; });
+    _preguntas = mezcladas.slice(0, Math.min(10, mezcladas.length));
+    _respuestas = {};
+    renderStep2();
+  });
+}
+
+function showStepErr(msg) {
+  var el = document.getElementById('step1-error');
+  if (el) el.innerHTML = '<div class="error-box">'+msg+'</div>';
+}
+
+function renderStep2() {
+  var pregHtml = _preguntas.map(function(p, i) {
+    var opts = (Array.isArray(p.opciones) ? p.opciones : []).map(function(o, oi) {
+      var radioId = 'p'+i+'o'+oi;
+      return '<label class="opcion-label" id="lbl-'+i+'-'+oi+'" for="'+radioId+'">' +
+        '<input type="radio" id="'+radioId+'" name="preg-'+i+'" value="'+escHtml(o)+'" onchange="seleccionarOpcion('+i+',this.value,'+_preguntas.length+')">' +
+        escHtml(o) + '</label>';
+    }).join('');
+    return '<div class="pregunta-card" id="pcard-'+i+'">' +
+      '<div class="pregunta-txt">'+(i+1)+'. '+escHtml(p.pregunta)+'</div>' +
+      opts +
+    '</div>';
+  }).join('');
+
+  render(
+    '<div class="card-hdr">' +
+      '<h1>&#9997; Evaluación</h1>' +
+      '<p>Responde las preguntas del curso</p>' +
+      '<span class="badge-curso">' + escHtml(_curso.nombre) + '</span>' +
+    '</div>' +
+    '<div class="card-body">' +
+      '<div class="step-label">Paso 2 de 2 — Evaluación (<span id="resp-cnt">0</span> / ' + _preguntas.length + ' respondidas)</div>' +
+      '<div class="progress-bar-wrap"><div class="progress-bar" style="width:100%"></div></div>' +
+      pregHtml +
+      '<div id="step2-error"></div>' +
+      '<button class="btn btn-primary" onclick="enviarStep2()">Enviar inscripción &#10003;</button>' +
+    '</div>'
+  );
+}
+
+function seleccionarOpcion(pregIdx, valor, total) {
+  _respuestas[pregIdx] = valor;
+  var cnt = document.getElementById('resp-cnt');
+  if (cnt) cnt.textContent = Object.keys(_respuestas).length;
+}
+
+function enviarStep2() {
+  if (Object.keys(_respuestas).length < _preguntas.length) {
+    var el = document.getElementById('step2-error');
+    if (el) el.innerHTML = '<div class="error-box">Responde todas las preguntas antes de enviar.</div>';
+    return;
+  }
+  var correctas = 0;
+  _preguntas.forEach(function(p, i) {
+    if (_respuestas[i] === p.respuesta_correcta) correctas++;
+  });
+  var puntaje = correctas;
+  guardarInscripcion(puntaje, _preguntas.length, function() {
+    renderResultado(_preguntas, puntaje, _preguntas.length);
+  });
+}
+
+function guardarInscripcion(puntaje, total, cb) {
+  var payload = Object.assign({}, _formData, { puntaje: puntaje, verificado: false, monto: 140, vendedor_id: _vendedorId || null });
+  supa.from('ventas_web').insert(payload).select('id').single().then(function(r) {
+    if (r.error) { console.warn('Error guardando inscripción:', r.error.message); }
+    if (r.data) _ventaWebId = r.data.id;
+    cb();
+  });
+}
+
+function renderResultado(preguntas, puntaje, total) {
+  var porcentaje = total > 0 ? Math.round((puntaje / total) * 100) : 100;
+  var aprobado   = porcentaje >= 60;
+  var scoreClass = aprobado ? 'aprobado' : 'reprobado';
+  var msg        = aprobado
+    ? '&#127881; ¡Felicitaciones! Has aprobado la evaluación. Nos pondremos en contacto contigo para confirmar tu inscripción.'
+    : '&#128172; Gracias por completar la evaluación. Nuestro equipo revisará tu inscripción y se pondrá en contacto contigo.';
+
+  var revisHtml = '';
+  if (preguntas && preguntas.length) {
+    revisHtml = '<div style="margin-top:20px;text-align:left">' +
+      '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6B7280;margin-bottom:12px">Revisión de respuestas</div>' +
+      preguntas.map(function(p, i) {
+        var resp    = _respuestas[i];
+        var esCorr  = resp === p.respuesta_correcta;
+        var icon    = esCorr ? '&#10003;' : '&#10007;';
+        var col     = esCorr ? '#15803D' : '#B91C1C';
+        var bg      = esCorr ? '#F0FDF4' : '#FFF1F2';
+        return '<div style="background:'+bg+';border-radius:8px;padding:10px 12px;margin-bottom:8px;border-left:3px solid '+col+'">' +
+          '<div style="font-size:12.5px;font-weight:600;color:#1F2937;margin-bottom:4px"><span style="color:'+col+'">'+icon+'</span> '+(i+1)+'. '+escHtml(p.pregunta)+'</div>' +
+          '<div style="font-size:12px;color:#374151">Tu respuesta: <strong>'+escHtml(resp)+'</strong>' +
+          (!esCorr ? ' &nbsp;&middot;&nbsp; <span style="color:#15803D">Correcta: <strong>'+escHtml(p.respuesta_correcta)+'</strong></span>' : '') +
+          '</div></div>';
+      }).join('') +
+    '</div>';
+  }
+
+  render(
+    '<div class="card-hdr">' +
+      '<h1>&#127942; Tu inscripción</h1>' +
+      '<p>Formulario enviado exitosamente</p>' +
+    '</div>' +
+    '<div class="card-body">' +
+      '<div class="resultado-box">' +
+        (total > 0 ? '<div class="resultado-score '+scoreClass+'">' + puntaje + '<span style="font-size:28px;font-weight:400;opacity:.6">/' + total + '</span></div>' +
+          '<div class="resultado-label">' + porcentaje + '% de respuestas correctas</div>' : '') +
+        '<div class="resultado-msg">'+msg+'</div>' +
+        revisHtml +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function val(id) {
+  var el = document.getElementById(id);
+  return el ? el.value : '';
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+init();
+</script>
+</body>
+</html>
