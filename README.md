@@ -1,5 +1,7 @@
 # VirtuallCorp — Sistema de Ventas y Gestión
 
+**🔗 Demo en vivo:** https://ramiroz93.github.io/sistema-ventas-virtualcorp/ (interfaz visible, sin conexión a una base de datos real — ver nota abajo)
+
 Panel interno de gestión para una academia de capacitación: control de ventas por turno, cronograma de eventos, finanzas, reportes y administración de usuarios, todo con autenticación por roles y actualización en tiempo real.
 
 Construido como SPA en JavaScript vanilla (sin framework) sobre Supabase, pensado para correr liviano en cualquier hosting estático.
