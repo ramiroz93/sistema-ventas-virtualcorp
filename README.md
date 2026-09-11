@@ -1,10 +1,16 @@
 # VirtuallCorp — Sistema de Ventas y Gestión
 
-**🔗 Demo en vivo:** https://ramiroz93.github.io/sistema-ventas-virtualcorp/ (interfaz visible, sin conexión a una base de datos real — ver nota abajo)
+**🔗 Demo en vivo:** https://ramiroz93.github.io/sistema-ventas-virtualcorp/app.html — 100% funcional, sin necesidad de crear cuenta: elige con qué rol entrar (Administrador / Supervisora / Ejecutivo de Ventas) y prueba el panel completo con datos ficticios.
 
 Panel interno de gestión para una academia de capacitación: control de ventas por turno, cronograma de eventos, finanzas, reportes y administración de usuarios, todo con autenticación por roles y actualización en tiempo real.
 
 Construido como SPA en JavaScript vanilla (sin framework) sobre Supabase, pensado para correr liviano en cualquier hosting estático.
+
+## Sobre la demo en vivo
+
+Corre 100% en el navegador, sin backend real: al inicio de `app.html`, el cliente real de Supabase fue reemplazado por un mock en memoria con la misma interfaz (`.from().select/insert/update/delete`) pero datos ficticios — ventas, cronograma, capacitadores, usuarios, ingresos/egresos, y también Maxxor y Tartarek (que siguen siendo pestañas de este mismo sistema). Puedes crear, editar y eliminar libremente; los cambios viven solo en tu pestaña y se pierden al recargar.
+
+> `index.html` (la portada del repo) pertenece a una versión anterior del sistema basada en Google Apps Script — el sistema actual, con el que corre la demo, es `app.html`.
 
 ## Qué resuelve
 
@@ -31,12 +37,11 @@ Dos módulos avanzados del mismo sistema —control de personal en tiempo real y
 
 ## Cómo correrlo localmente
 
-1. Clona el repo y abre `index.html` con cualquier servidor estático (o usa la extensión Live Server de VS Code — abrir el archivo directo con `file://` no funciona por CORS de Supabase).
-2. Crea un proyecto en [Supabase](https://supabase.com) y corre `supabase-schema.sql` en el SQL Editor para crear las tablas.
-3. En `app.html`, `form-web.html` y `registro-cliente.html`, reemplaza `SUPABASE_URL` y `SUPABASE_ANON_KEY` por las credenciales de tu proyecto (Settings → API en el dashboard de Supabase).
-4. Despliega las Edge Functions de `supabase/functions/` con el [CLI de Supabase](https://supabase.com/docs/guides/cli) (`supabase functions deploy`).
+Clona el repo y abre `app.html` con cualquier servidor estático (o la extensión Live Server de VS Code) — corre igual que la demo en vivo, sin configurar nada.
 
-> Este repo es una pieza de portfolio: las credenciales originales fueron removidas y reemplazadas por placeholders.
+Para conectarlo a un Supabase real en vez del mock: crea un proyecto en [Supabase](https://supabase.com), corre `supabase-schema.sql`, reemplaza el bloque de datos de demo al inicio del `<script>` de `app.html` por `var supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);` con tus propias credenciales (Settings → API), y despliega las Edge Functions de `supabase/functions/` con el [CLI de Supabase](https://supabase.com/docs/guides/cli).
+
+> Este repo es una pieza de portfolio: las credenciales originales fueron removidas.
 
 ## Estructura
 

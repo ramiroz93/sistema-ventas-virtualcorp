@@ -221,12 +221,11 @@
 <div id="pantalla-login">
   <div class="login-card">
     <div class="login-logo">VirtuallCorp</div>
-    <div class="login-sub">Sistema de Ventas</div>
-    <label>Email</label>
-    <input type="email" id="login-email" placeholder="tu@email.com" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
-    <label>Contraseña</label>
-    <input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
-    <button class="btn-login" id="btn-login" onclick="login()">Ingresar</button>
+    <div class="login-sub">Sistema de Ventas — Demo de portfolio</div>
+    <p style="font-size:13px;color:var(--texto-sec,#71717A);text-align:center;margin:-4px 0 16px">Sin backend real — elige con qué rol quieres entrar. Los datos son ficticios y viven solo en esta pestaña.</p>
+    <button class="btn-login" style="margin-bottom:8px" onclick="loginComoDemo('admin')">Entrar como Administrador</button>
+    <button class="btn-login" style="margin-bottom:8px;background:var(--acento-suave,#EEF0F9);color:var(--acento,#14215E)" onclick="loginComoDemo('supervisor')">Entrar como Supervisora</button>
+    <button class="btn-login" style="background:var(--acento-suave,#EEF0F9);color:var(--acento,#14215E)" onclick="loginComoDemo('ejecutivo')">Entrar como Ejecutivo de Ventas</button>
     <div class="login-msg" id="login-msg"></div>
   </div>
 </div>
@@ -2142,10 +2141,430 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  // Reemplaza con las credenciales de TU proyecto Supabase (Settings > API)
+  // ══════════════════════════════════════════════════════════════════════
+  // DEMO DE PORTFOLIO — este bloque reemplaza al cliente real de Supabase
+  // (`supa`) por un mock en memoria con la misma interfaz (.from().select/
+  // insert/update/delete/eq/order/etc.), datos ficticios y sin red. También
+  // incluye los datos de Maxxor y Tartarek, que siguen siendo pestañas de
+  // este mismo sistema. Nada de esto toca ningún backend real.
+  // ══════════════════════════════════════════════════════════════════════
   var SUPABASE_URL = 'https://tu-proyecto.supabase.co';
   var SUPABASE_ANON_KEY = 'TU_SUPABASE_ANON_KEY_AQUI';
-  var supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function _genId(p) { return p + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function _placeholderImg(texto, bg) {
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200"><rect width="100%" height="100%" fill="' + bg + '"/>' +
+      '<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#fff">' + texto + '</text></svg>';
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+  }
+  function _hace(dias, horas) { var d = new Date(Date.now() - dias * 86400000); if (horas != null) d.setHours(horas, Math.floor(Math.random() * 60), 0, 0); return d; }
+
+  // ── USUARIOS (3 logins de demo + compañeros de equipo) ──
+  var DEMO_USUARIOS = [
+    { id: 'admin-demo', nombre: 'Admin Demo', rol: 'admin', vendedor_nombre: null, activo: true, link_token: null, created_at: _hace(200).toISOString() },
+    { id: 'supervisor-demo', nombre: 'Supervisora Demo', rol: 'supervisor', vendedor_nombre: null, activo: true, link_token: null, created_at: _hace(180).toISOString() },
+    { id: 'ejecutivo-demo', nombre: 'Ana Ejecutiva', rol: 'ejecutivo', vendedor_nombre: 'Ana Ejecutiva', activo: true, link_token: null, created_at: _hace(150).toISOString() },
+    { id: 'user-luis', nombre: 'Luis Fernández', rol: 'ejecutivo', vendedor_nombre: 'Luis Fernández', activo: true, link_token: null, created_at: _hace(120).toISOString() },
+    { id: 'user-maria', nombre: 'María Paz', rol: 'ejecutivo', vendedor_nombre: 'María Paz', activo: true, link_token: null, created_at: _hace(60).toISOString() },
+  ];
+
+  // ── ÁREAS Y CURSOS ──
+  var DEMO_AREAS = [
+    { id: 'area-1', nombre: 'Finanzas' },
+    { id: 'area-2', nombre: 'Marketing Digital' },
+    { id: 'area-3', nombre: 'Tecnología' },
+    { id: 'area-4', nombre: 'Recursos Humanos' },
+  ];
+  var DEMO_CURSOS = [
+    { id: 'curso-1', nombre: 'Excel Avanzado para Gestión Pública', area_id: 'area-1', version: '2026', capacitador: 'Jorge Quispe', temario: 'Tablas dinámicas, fórmulas financieras, macros básicas, dashboards.', link_gratuito: '', link_pagado: '', modalidad: 'Presencial', created_at: _hace(200).toISOString() },
+    { id: 'curso-2', nombre: 'Contabilidad Gubernamental Básica', area_id: 'area-1', version: '2026', capacitador: 'Jorge Quispe', temario: 'Normativa, registros contables, presupuesto público.', link_gratuito: '', link_pagado: '', modalidad: 'Presencial', created_at: _hace(190).toISOString() },
+    { id: 'curso-3', nombre: 'Marketing Digital para Emprendedores', area_id: 'area-2', version: '2026', capacitador: 'Rodrigo Salinas', temario: 'Redes sociales, Meta Ads, email marketing, analítica web.', link_gratuito: 'https://ejemplo.com/material-gratuito', link_pagado: 'https://ejemplo.com/material-completo', modalidad: 'Web', created_at: _hace(170).toISOString() },
+    { id: 'curso-4', nombre: 'Redes Sociales para Negocios', area_id: 'area-2', version: '2025', capacitador: 'Rodrigo Salinas', temario: 'Estrategia de contenido, calendario editorial, métricas.', link_gratuito: '', link_pagado: '', modalidad: 'Presencial', created_at: _hace(160).toISOString() },
+    { id: 'curso-5', nombre: 'Power BI para Reportes Gerenciales', area_id: 'area-3', version: '2026', capacitador: 'Daniela Peña', temario: 'Conexión de datos, modelado, DAX básico, dashboards.', link_gratuito: '', link_pagado: '', modalidad: 'Presencial', created_at: _hace(140).toISOString() },
+    { id: 'curso-6', nombre: 'Ciberseguridad Básica', area_id: 'area-3', version: '2026', capacitador: 'Daniela Peña', temario: 'Contraseñas seguras, phishing, backups, buenas prácticas.', link_gratuito: '', link_pagado: '', modalidad: 'Presencial', created_at: _hace(130).toISOString() },
+    { id: 'curso-7', nombre: 'Reclutamiento y Selección por Competencias', area_id: 'area-4', version: '2026', capacitador: 'Mauricio Fernández', temario: 'Perfil de puesto, entrevistas, assessment, onboarding.', link_gratuito: '', link_pagado: '', modalidad: 'Presencial', created_at: _hace(110).toISOString() },
+    { id: 'curso-8', nombre: 'Liderazgo de Equipos Remotos', area_id: 'area-4', version: '2025', capacitador: 'Mauricio Fernández', temario: 'Comunicación asíncrona, gestión de desempeño, cultura remota.', link_gratuito: '', link_pagado: '', modalidad: 'Presencial', created_at: _hace(100).toISOString() },
+  ];
+
+  // ── CAPACITADORES ──
+  var DEMO_CAPACITADORES = [
+    { id: 'cap-1', nombre: 'Jorge Quispe', celular: '70011111', activo: true, banco: 'Banco Unión', num_cuenta: '1001001', monto: 800, observaciones: 'Muy puntual, buena evaluación de participantes.', rend_conexion: 5, rend_presentacion: 4, rend_curso: 5, qr_imagen: '', areas: ['Finanzas'], cursos: ['Excel Avanzado para Gestión Pública', 'Contabilidad Gubernamental Básica'] },
+    { id: 'cap-2', nombre: 'Rodrigo Salinas', celular: '70022222', activo: true, banco: 'BNB', num_cuenta: '1002002', monto: 750, observaciones: '', rend_conexion: 4, rend_presentacion: 5, rend_curso: 4, qr_imagen: '', areas: ['Marketing Digital'], cursos: ['Marketing Digital para Emprendedores', 'Redes Sociales para Negocios'] },
+    { id: 'cap-3', nombre: 'Daniela Peña', celular: '70033333', activo: true, banco: 'Banco Unión', num_cuenta: '1003003', monto: 900, observaciones: 'Especialista senior, cobra tarifa más alta.', rend_conexion: 5, rend_presentacion: 5, rend_curso: 5, qr_imagen: '', areas: ['Tecnología'], cursos: ['Power BI para Reportes Gerenciales', 'Ciberseguridad Básica'] },
+    { id: 'cap-4', nombre: 'Mauricio Fernández', celular: '70044444', activo: true, banco: 'BCP', num_cuenta: '1004004', monto: 700, observaciones: '', rend_conexion: 4, rend_presentacion: 4, rend_curso: 4, qr_imagen: '', areas: ['Recursos Humanos'], cursos: ['Reclutamiento y Selección por Competencias', 'Liderazgo de Equipos Remotos'] },
+  ];
+
+  // ── PERMISOS ──
+  var DEMO_PERMISOS = [
+    { clave: 'gestionar_usuarios', ejecutivo: false, supervisor: false, admin: true },
+    { clave: 'gestionar_cronograma', ejecutivo: false, supervisor: true, admin: true },
+    { clave: 'gestionar_cursos', ejecutivo: false, supervisor: true, admin: true },
+    { clave: 'ver_ie', ejecutivo: false, supervisor: true, admin: true },
+    { clave: 'ver_reportes', ejecutivo: false, supervisor: true, admin: true },
+  ];
+
+  // ── VENTAS (generadas: ~20 días hábiles x 3 ejecutivos) ──
+  var _NOMBRES_DEMO = ['Carla Vega', 'Diego Ríos', 'Patricia Gómez', 'Sergio Blanco', 'Valeria Cruz', 'Andrés Mamani', 'Lucía Fernández', 'Marco Antonio Ibáñez', 'Fabiola Choque', 'Ramiro Torres'];
+  var _BANCOS_DEMO = ['BNB', 'Banco Unión', 'BCP', 'Banco Fassil', 'Banco Ganadero'];
+  var _TURNOS_DEMO = ['Manana', 'Tarde', 'Noche', 'Extra'];
+  var _ATENCION_DEMO = ['😍 Excelente', '😊 Buena', '😐 Regular', '😕 Mala'];
+  var _EJECUTIVOS_DEMO = [
+    { id: 'ejecutivo-demo', nombre: 'Ana Ejecutiva' },
+    { id: 'user-luis', nombre: 'Luis Fernández' },
+    { id: 'user-maria', nombre: 'María Paz' },
+  ];
+
+  var CIUDADES_BOLIVIA_DEMO = ['La Paz', 'Santa Cruz', 'Cochabamba', 'Tarija', 'Sucre'];
+  var DEMO_VENTAS = [];
+  (function generarVentasDemo() {
+    var cursosPresenciales = DEMO_CURSOS.filter(function(c) { return c.modalidad !== 'Web'; });
+    for (var d = 20; d >= 0; d--) {
+      var fecha = _hace(d);
+      if (fecha.getDay() === 0) continue; // sin ventas domingo
+      _EJECUTIVOS_DEMO.forEach(function(ej) {
+        var nVentas = 1 + Math.floor(Math.random() * 3);
+        for (var i = 0; i < nVentas; i++) {
+          var curso = cursosPresenciales[Math.floor(Math.random() * cursosPresenciales.length)];
+          var area = DEMO_AREAS.filter(function(a) { return a.id === curso.area_id; })[0];
+          var creado = _hace(d, 8 + Math.floor(Math.random() * 10));
+          var nombre = _NOMBRES_DEMO[Math.floor(Math.random() * _NOMBRES_DEMO.length)];
+          DEMO_VENTAS.push({
+            id: _genId('venta'), created_at: creado.toISOString(),
+            nombres: nombre, celular: '7' + Math.floor(1000000 + Math.random() * 8999999),
+            correo: nombre.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z.]/g, '') + '@ejemplo.com',
+            numero_transaccion: 'TX' + Math.floor(100000 + Math.random() * 899999),
+            fecha_pago: creado.toISOString().slice(0, 10),
+            banco: _BANCOS_DEMO[Math.floor(Math.random() * _BANCOS_DEMO.length)],
+            monto: [150, 200, 250, 300, 350][Math.floor(Math.random() * 5)],
+            area: area.nombre, curso: curso.nombre, turno: _TURNOS_DEMO[Math.floor(Math.random() * _TURNOS_DEMO.length)],
+            razon_social: Math.random() < 0.2 ? nombre + ' S.R.L.' : '', nit: Math.random() < 0.2 ? String(Math.floor(1000000 + Math.random() * 8999999)) : '',
+            verificado: Math.random() < 0.75,
+            atencion_cliente: _ATENCION_DEMO[Math.floor(Math.random() * _ATENCION_DEMO.length)],
+            notificaciones: '', ciudad: CIUDADES_BOLIVIA_DEMO[Math.floor(Math.random() * CIUDADES_BOLIVIA_DEMO.length)], ci: String(Math.floor(1000000 + Math.random() * 8999999)),
+            vendedor_id: ej.id, vendedor_nombre: ej.nombre,
+          });
+        }
+      });
+    }
+    // Admin y Supervisora también cierran alguna venta propia de vez en cuando,
+    // para que su Panel Principal (que es personal, por vendedor) no se vea vacío.
+    [{ id: 'admin-demo', nombre: 'Admin Demo' }, { id: 'supervisor-demo', nombre: 'Supervisora Demo' }].forEach(function(u) {
+      for (var k = 0; k < 3; k++) {
+        var curso2 = cursosPresenciales[Math.floor(Math.random() * cursosPresenciales.length)];
+        var area2 = DEMO_AREAS.filter(function(a) { return a.id === curso2.area_id; })[0];
+        var creado2 = _hace(Math.floor(Math.random() * 15), 9 + Math.floor(Math.random() * 8));
+        var nombre2 = _NOMBRES_DEMO[Math.floor(Math.random() * _NOMBRES_DEMO.length)];
+        DEMO_VENTAS.push({
+          id: _genId('venta'), created_at: creado2.toISOString(), nombres: nombre2,
+          celular: '7' + Math.floor(1000000 + Math.random() * 8999999),
+          correo: nombre2.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z.]/g, '') + '@ejemplo.com',
+          numero_transaccion: 'TX' + Math.floor(100000 + Math.random() * 899999),
+          fecha_pago: creado2.toISOString().slice(0, 10), banco: _BANCOS_DEMO[Math.floor(Math.random() * _BANCOS_DEMO.length)],
+          monto: [150, 200, 250][Math.floor(Math.random() * 3)], area: area2.nombre, curso: curso2.nombre,
+          turno: _TURNOS_DEMO[Math.floor(Math.random() * _TURNOS_DEMO.length)], razon_social: '', nit: '',
+          verificado: true, atencion_cliente: _ATENCION_DEMO[Math.floor(Math.random() * 2)], notificaciones: '',
+          ciudad: CIUDADES_BOLIVIA_DEMO[Math.floor(Math.random() * CIUDADES_BOLIVIA_DEMO.length)], ci: String(Math.floor(1000000 + Math.random() * 8999999)),
+          vendedor_id: u.id, vendedor_nombre: u.nombre,
+        });
+      }
+    });
+  })();
+
+  // ── VENTAS WEB ──
+  var DEMO_VENTAS_WEB = [];
+  (function generarVentasWebDemo() {
+    var cursoWeb = DEMO_CURSOS.filter(function(c) { return c.modalidad === 'Web'; })[0];
+    for (var d = 15; d >= 0; d--) {
+      if (Math.random() < 0.4) continue;
+      var ej = _EJECUTIVOS_DEMO[Math.floor(Math.random() * _EJECUTIVOS_DEMO.length)];
+      var creado = _hace(d, 9 + Math.floor(Math.random() * 8));
+      var nombre = _NOMBRES_DEMO[Math.floor(Math.random() * _NOMBRES_DEMO.length)];
+      DEMO_VENTAS_WEB.push({
+        id: _genId('ventaweb'), created_at: creado.toISOString(),
+        nombres: nombre, celular: '7' + Math.floor(1000000 + Math.random() * 8999999),
+        correo: nombre.toLowerCase().replace(/\s+/g, '.') + '@ejemplo.com',
+        curso_id: cursoWeb.id, curso: cursoWeb.nombre,
+        monto: 180, fecha_pago: creado.toISOString().slice(0, 10),
+        verificado: Math.random() < 0.7, puntaje: Math.floor(60 + Math.random() * 40),
+        vendedor_id: ej.id, vendedor_nombre: ej.nombre,
+      });
+    }
+  })();
+
+  // ── CRONOGRAMA DE EVENTOS ──
+  var DEMO_CRONOGRAMA_EVENTOS = [];
+  (function generarCronogramaDemo() {
+    for (var d = -10; d <= 20; d++) {
+      if (Math.random() < 0.55) continue;
+      var fecha = new Date(); fecha.setDate(fecha.getDate() + d);
+      if (fecha.getDay() === 0) continue;
+      var curso = DEMO_CURSOS[Math.floor(Math.random() * DEMO_CURSOS.length)];
+      var cap = DEMO_CAPACITADORES.filter(function(c) { return c.cursos.indexOf(curso.nombre) >= 0; })[0];
+      var esPasado = d < 0;
+      DEMO_CRONOGRAMA_EVENTOS.push({
+        id: _genId('evento'), fecha: fecha.toISOString().slice(0, 10), curso: curso.nombre,
+        turno: _TURNOS_DEMO[Math.floor(Math.random() * 3)],
+        vendedor_id: _EJECUTIVOS_DEMO[Math.floor(Math.random() * _EJECUTIVOS_DEMO.length)].id,
+        capacitador_id: cap ? cap.id : null,
+        finalizado: esPasado, reprogramado: false, fecha_original: null,
+        pago_monto: cap ? cap.monto : null, pago_pagado: esPasado && Math.random() < 0.6,
+        created_at: _hace(30).toISOString(),
+      });
+    }
+  })();
+
+  // ── INGRESOS / EGRESOS ──
+  var DEMO_IE_CATEGORIAS = [
+    { id: _genId('cat'), tipo: 'ingreso', nombre: 'Ventas de Cursos' },
+    { id: _genId('cat'), tipo: 'ingreso', nombre: 'Consultoría' },
+    { id: _genId('cat'), tipo: 'ingreso', nombre: 'Capacitaciones' },
+    { id: _genId('cat'), tipo: 'ingreso', nombre: 'Otros' },
+    { id: _genId('cat'), tipo: 'egreso', nombre: 'Capacitadores' },
+    { id: _genId('cat'), tipo: 'egreso', nombre: 'Marketing' },
+    { id: _genId('cat'), tipo: 'egreso', nombre: 'Plataforma/Tecnología' },
+    { id: _genId('cat'), tipo: 'egreso', nombre: 'Administrativo' },
+    { id: _genId('cat'), tipo: 'egreso', nombre: 'Operativo' },
+  ];
+  var DEMO_INGRESOS_EGRESOS = [];
+  (function generarIEDemo() {
+    var detallesIngreso = ['Pago de curso al contado', 'Consultoría empresarial', 'Capacitación in-company'];
+    var detallesEgreso = ['Pago a capacitador', 'Publicidad en redes', 'Suscripción Zoom/Drive', 'Materiales de oficina', 'Servicio de internet'];
+    for (var d = 45; d >= 0; d -= 2) {
+      if (Math.random() < 0.3) continue;
+      var esIngreso = Math.random() < 0.6;
+      var cats = DEMO_IE_CATEGORIAS.filter(function(c) { return c.tipo === (esIngreso ? 'ingreso' : 'egreso'); });
+      var cat = cats[Math.floor(Math.random() * cats.length)];
+      DEMO_INGRESOS_EGRESOS.push({
+        id: _genId('ie'), tipo: esIngreso ? 'ingreso' : 'egreso', categoria: cat.nombre,
+        detalle: (esIngreso ? detallesIngreso : detallesEgreso)[Math.floor(Math.random() * 5) % (esIngreso ? detallesIngreso.length : detallesEgreso.length)],
+        fecha: _hace(d).toISOString().slice(0, 10), monto: Math.floor(100 + Math.random() * 900),
+        usuario_id: 'admin-demo', created_at: _hace(d).toISOString(),
+      });
+    }
+  })();
+
+  // ── LOG DE ELIMINACIONES / TAREAS / PREGUNTAS WEB / REPORTES CURSOS ──
+  var DEMO_LOG_ELIMINACIONES = [];
+  var DEMO_TAREAS_TRABAJADORES = [
+    { id: _genId('tarea'), trabajador_id: 'ejecutivo-demo', tarea: 'Llamar a 10 leads pendientes de la semana', importancia: 'alta', fecha_asignacion: _hace(2).toISOString().slice(0, 10), asignado_por: 'Admin Demo', completada: false, created_at: _hace(2).toISOString() },
+    { id: _genId('tarea'), trabajador_id: 'ejecutivo-demo', tarea: 'Actualizar seguimiento en cronograma', importancia: 'media', fecha_asignacion: _hace(5).toISOString().slice(0, 10), asignado_por: 'Admin Demo', completada: true, created_at: _hace(5).toISOString() },
+    { id: _genId('tarea'), trabajador_id: 'user-luis', tarea: 'Enviar certificados del turno tarde', importancia: 'baja', fecha_asignacion: _hace(1).toISOString().slice(0, 10), asignado_por: 'Supervisora Demo', completada: false, created_at: _hace(1).toISOString() },
+  ];
+  var DEMO_PREGUNTAS_WEB = [];
+  (function() {
+    var cursoWeb = DEMO_CURSOS.filter(function(c) { return c.modalidad === 'Web'; })[0];
+    DEMO_PREGUNTAS_WEB.push(
+      { id: _genId('preg'), curso_id: cursoWeb.id, pregunta: '¿Qué plataforma se recomienda para anuncios pagados?', opciones: ['Meta Ads', 'Solo orgánico', 'Ninguna', 'Volantes'], respuesta_correcta: 0, created_at: _hace(30).toISOString() },
+      { id: _genId('preg'), curso_id: cursoWeb.id, pregunta: '¿Qué mide principalmente el "engagement"?', opciones: ['Ventas directas', 'Interacción de la audiencia', 'El precio del anuncio', 'El número de empleados'], respuesta_correcta: 1, created_at: _hace(28).toISOString() }
+    );
+  })();
+  var DEMO_REPORTES_CURSOS = [];
+
+  // ── TARTAREK (mismos datos que el repo standalone) ──
+  var DEMO_CVS = [
+    { id: 'cv-1', nombre_archivo: 'Maria_Fernanda_Rojas_CV.pdf', drive_file_url: '#', estado_extraccion: 'completo', posible_duplicado_de: null, texto_extraido: 'Contadora con 8 años de experiencia en gestión pública, manejo avanzado de Excel, elaboración de estados financieros y presupuestos institucionales.' },
+    { id: 'cv-2', nombre_archivo: 'Maria_F_Rojas_CV_v2.pdf', drive_file_url: '#', estado_extraccion: 'completo', posible_duplicado_de: 'cv-1', texto_extraido: 'Contadora, gestión pública, Excel avanzado, presupuestos institucionales y estados financieros.' },
+    { id: 'cv-3', nombre_archivo: 'Carlos_Andres_Mamani_CV.pdf', drive_file_url: '#', estado_extraccion: 'completo', posible_duplicado_de: null, texto_extraido: 'Especialista en marketing digital, redes sociales, publicidad en Meta Ads e Instagram, analítica web y estrategias de contenido.' },
+    { id: 'cv-4', nombre_archivo: 'Lucia_Vargas_CV.pdf', drive_file_url: '#', estado_extraccion: 'completo', posible_duplicado_de: null, texto_extraido: 'Ingeniera comercial con experiencia en atención al cliente, ventas consultivas y capacitación de equipos comerciales.' },
+    { id: 'cv-5', nombre_archivo: 'Jorge_Quispe_CV.pdf', drive_file_url: '#', estado_extraccion: 'completo', posible_duplicado_de: null, texto_extraido: 'Analista de datos, manejo de Power BI, Excel avanzado, dashboards financieros y automatización de reportes.' },
+    { id: 'cv-6', nombre_archivo: 'Ana_Belen_Choque_CV.pdf', drive_file_url: '#', estado_extraccion: 'completo', posible_duplicado_de: null, texto_extraido: 'Especialista en recursos humanos, procesos de selección, gestión del talento y liderazgo de equipos remotos.' },
+    { id: 'cv-7', nombre_archivo: 'Ruben_Torrez_CV.pdf', drive_file_url: '#', estado_extraccion: 'completo', posible_duplicado_de: null, texto_extraido: 'Consultor en gestión pública, transformación digital del Estado, gobierno electrónico y modernización institucional.' },
+    { id: 'cv-8', nombre_archivo: 'Patricia_Gonzales_CV.pdf', drive_file_url: '#', estado_extraccion: 'completo', posible_duplicado_de: null, texto_extraido: 'Redactora y editora, comunicación institucional, redacción de documentos técnicos y oratoria.' },
+    { id: 'cv-9', nombre_archivo: 'Fernando_Aguilar_CV.pdf', drive_file_url: '#', estado_extraccion: 'sin_texto_extraido', posible_duplicado_de: null, texto_extraido: null },
+    { id: 'cv-10', nombre_archivo: 'Silvia_Rocha_CV.pdf', drive_file_url: '#', estado_extraccion: 'completo', posible_duplicado_de: null, texto_extraido: 'Contabilidad avanzada, Excel avanzado, gestión de presupuestos institucionales y tributación.' },
+  ];
+  var DEMO_IDEAS_CURSOS = [
+    { id: 'idea-1', nombre: 'Excel Avanzado para Gestión Pública', detalle: 'Alta demanda de funcionarios públicos que necesitan automatizar reportes financieros.', contenido: '▪️ Introducción a Excel avanzado\n▪️ Tablas dinámicas y reportes automatizados\n▪️ Fórmulas financieras\n▪️ Validación de datos\n▪️ Macros básicas\n▪️ Dashboards\n▪️ Seguridad y respaldo', area_nombre: 'Finanzas', importancia: 5, origen: 'tartarek', enviado_por: 'Ana', created_at: _hace(5).toISOString() },
+    { id: 'idea-2', nombre: 'Marketing Digital para Emprendedores', detalle: 'Emprendedores buscando formalizar su presencia digital.', contenido: '▪️ Fundamentos de marketing digital\n▪️ Contenido para redes\n▪️ Meta Ads\n▪️ Analítica web\n▪️ Email marketing\n▪️ Posicionamiento de marca\n▪️ Plan de 90 días', area_nombre: 'Marketing', importancia: 3, origen: 'manual', enviado_por: '', created_at: _hace(2).toISOString() },
+  ];
+  var DEMO_TARTAREK_NUEVOS = [
+    { id: 'nuevo-1', area_nombre: 'Finanzas', curso_sugerido: 'Power BI para Reportes Gerenciales', justificacion: 'Alta demanda de dashboards interactivos; complementa a Excel Avanzado.', contenido: '▪️ Introducción a Power BI\n▪️ Modelado de datos\n▪️ Medidas DAX\n▪️ Visualizaciones\n▪️ Dashboards\n▪️ Publicación\n▪️ Buenas prácticas', lote_fecha: _hace(3).toISOString() },
+    { id: 'nuevo-2', area_nombre: 'Finanzas', curso_sugerido: 'Contabilidad Gubernamental Básica', justificacion: 'Consultas recurrentes de funcionarios nuevos.', contenido: '', lote_fecha: _hace(3).toISOString() },
+    { id: 'nuevo-3', area_nombre: 'Marketing', curso_sugerido: 'Redes Sociales para Emprendimientos', justificacion: 'Tendencia creciente de microempresarios buscando presencia digital.', contenido: '▪️ Diagnóstico de redes\n▪️ Audiencia y tono\n▪️ Calendario de contenido\n▪️ Herramientas gratuitas\n▪️ Métricas\n▪️ Comunidad\n▪️ Plan mensual', lote_fecha: _hace(3).toISOString() },
+  ];
+  var DEMO_SEGUIMIENTO = [
+    { id: 'seg-1', idea_curso_id: null, nombre: 'Power BI para Reportes Gerenciales', detalle: 'Alta demanda de dashboards.', contenido: '7 temas confirmados.', area_nombre: 'Finanzas', docente_tipo: 'cv', cv_id: 'cv-5', cv_nombre: 'Jorge_Quispe_CV.pdf', capacitador_id: null, capacitador_nombre: null, whatsapp: '70011223', enviado_por: 'Ana',
+      etapa_llamada: true, etapa_llamada_fecha: _hace(6).toISOString(), etapa_temario: true, etapa_temario_fecha: _hace(3).toISOString(), etapa_diapositivas: false, etapa_diapositivas_fecha: _hace(-2).toISOString(), etapa_zoom: false, etapa_zoom_fecha: null, created_at: _hace(7).toISOString() },
+  ];
+  var DEMO_CV_MATCHES = [
+    { curso_id: 'idea-1', cv_id: 'cv-1', similarity_score: 0.82, palabras_encontradas: ['excel', 'gestión', 'presupuestos'], motivo: null },
+    { curso_id: 'idea-1', cv_id: 'cv-10', similarity_score: 0.74, palabras_encontradas: ['excel', 'presupuestos'], motivo: null },
+    { curso_id: 'idea-2', cv_id: 'cv-3', similarity_score: 0.88, palabras_encontradas: ['marketing', 'digital', 'redes'], motivo: null },
+  ];
+  var DEMO_CV_MATCHES_RECHAZADOS = [];
+  var DEMO_PALABRAS_DESCARTADAS = [];
+  var _TARTAREK_BUSCARCV_STOPWORDS = ['de', 'la', 'el', 'en', 'y', 'a', 'los', 'las', 'del', 'un', 'una', 'que', 'con', 'para', 'por', 'se', 'su', 'sus', 'al', 'lo', 'como', 'experiencia', 'busco', 'buscamos', 'necesito', 'necesitamos', 'alguien', 'persona', 'candidato'];
+
+  // ── MAXXOR (usa a los mismos usuarios ejecutivos/supervisora como "empleados") ──
+  var DEMO_CP_EVENTOS = [];
+  var DEMO_CP_HORARIOS = [];
+  (function generarMaxxorDemo() {
+    var HORARIO = { activo: true, t1e: '08:00', t1s: '13:00', t2: true, t2e: '14:00', t2s: '18:00' };
+    _EJECUTIVOS_DEMO.concat([{ id: 'supervisor-demo', nombre: 'Supervisora Demo' }]).forEach(function(emp, idx) {
+      DEMO_CP_HORARIOS.push({ id: _genId('horario'), vendedor_id: emp.id, vendedor_nombre: emp.nombre, tolerancia_minutos: 5, dias: { lun: HORARIO, mar: HORARIO, mie: HORARIO, jue: HORARIO, vie: HORARIO, sab: { activo: false }, dom: { activo: false } }, updated_at: new Date().toISOString() });
+      for (var d = 13; d >= 0; d--) {
+        var fecha = _hace(d); if (fecha.getDay() === 0 || fecha.getDay() === 6) continue;
+        var esHoy = d === 0;
+        var retraso = Math.random() < 0.25 ? Math.round(Math.random() * 18) : 0;
+        var ent1 = _hace(d); ent1.setHours(8, retraso, 0, 0);
+        DEMO_CP_EVENTOS.push({ vendedor_id: emp.id, vendedor_nombre: emp.nombre, tipo: 'checkin', created_at: ent1.toISOString() });
+        var nCap = 2 + Math.floor(Math.random() * 3);
+        for (var c = 0; c < nCap; c++) {
+          var ct = new Date(ent1.getTime() + (c + 1) * 40 * 60000);
+          DEMO_CP_EVENTOS.push({ vendedor_id: emp.id, vendedor_nombre: emp.nombre, tipo: 'captura', url_captura: _placeholderImg('Captura ' + (c + 1), '#7C3AED'), created_at: ct.toISOString() });
+        }
+        var dejarEnLinea = esHoy && idx % 2 === 0;
+        var sal1 = _hace(d); sal1.setHours(13, Math.round(Math.random() * 10), 0, 0);
+        if (!dejarEnLinea) DEMO_CP_EVENTOS.push({ vendedor_id: emp.id, vendedor_nombre: emp.nombre, tipo: 'checkout', created_at: sal1.toISOString() });
+        var ent2 = _hace(d); ent2.setHours(14, Math.round(Math.random() * 8), 0, 0);
+        DEMO_CP_EVENTOS.push({ vendedor_id: emp.id, vendedor_nombre: emp.nombre, tipo: 'checkin', created_at: ent2.toISOString() });
+        var sal2 = _hace(d); sal2.setHours(18, Math.round(Math.random() * 10), 0, 0);
+        if (!dejarEnLinea) DEMO_CP_EVENTOS.push({ vendedor_id: emp.id, vendedor_nombre: emp.nombre, tipo: 'checkout', created_at: sal2.toISOString() });
+      }
+    });
+  })();
+
+  // ── Registro de tablas del mock ──
+  var DEMO_TABLES = {
+    usuarios: DEMO_USUARIOS, areas: DEMO_AREAS, cursos: DEMO_CURSOS, capacitadores: DEMO_CAPACITADORES,
+    permisos: DEMO_PERMISOS, ventas: DEMO_VENTAS, ventas_web: DEMO_VENTAS_WEB, cronograma_eventos: DEMO_CRONOGRAMA_EVENTOS,
+    ie_categorias: DEMO_IE_CATEGORIAS, ingresos_egresos: DEMO_INGRESOS_EGRESOS, log_eliminaciones: DEMO_LOG_ELIMINACIONES,
+    tareas_trabajadores: DEMO_TAREAS_TRABAJADORES, preguntas_web: DEMO_PREGUNTAS_WEB, reportes_cursos: DEMO_REPORTES_CURSOS,
+    cvs: DEMO_CVS, ideas_cursos: DEMO_IDEAS_CURSOS, tartarek_cursos_nuevos: DEMO_TARTAREK_NUEVOS, seguimiento_cursos: DEMO_SEGUIMIENTO,
+    cv_matches: DEMO_CV_MATCHES, cv_matches_rechazados: DEMO_CV_MATCHES_RECHAZADOS, palabras_descartadas: DEMO_PALABRAS_DESCARTADAS,
+    cp_eventos: DEMO_CP_EVENTOS, cp_horarios: DEMO_CP_HORARIOS,
+  };
+
+  // ── Query builder genérico (imita supabase-js, sin red) ──
+  function _matchesFilters(row, filters) {
+    return filters.every(function(f) {
+      if (f.t === 'eq') return row[f.field] === f.val;
+      if (f.t === 'neq') return row[f.field] !== f.val;
+      if (f.t === 'gte') return row[f.field] >= f.val;
+      if (f.t === 'lte') return row[f.field] <= f.val;
+      if (f.t === 'gt') return row[f.field] > f.val;
+      if (f.t === 'lt') return row[f.field] < f.val;
+      if (f.t === 'in') return f.vals.indexOf(row[f.field]) >= 0;
+      if (f.t === 'ilike') { var needle = String(f.pattern).replace(/%/g, '').toLowerCase(); return String(row[f.field] || '').toLowerCase().indexOf(needle) >= 0; }
+      if (f.t === 'not-is-null') return row[f.field] !== null && row[f.field] !== undefined;
+      return true;
+    });
+  }
+  function _joinRow(table, row, sel) {
+    sel = sel || '';
+    var out = row;
+    if (table === 'cursos' && sel.indexOf('areas(') >= 0) {
+      out = Object.assign({}, out, { areas: DEMO_AREAS.filter(function(a) { return a.id === row.area_id; })[0] || null });
+    }
+    if ((table === 'ventas' || table === 'ingresos_egresos') && sel.indexOf('usuarios') >= 0) {
+      var uid = table === 'ventas' ? row.vendedor_id : row.usuario_id;
+      var u = DEMO_USUARIOS.filter(function(x) { return x.id === uid; })[0];
+      out = Object.assign({}, out, { usuarios: u ? { nombre: u.nombre, vendedor_nombre: u.vendedor_nombre } : null });
+    }
+    if (table === 'cronograma_eventos' && sel.indexOf('capacitadores(') >= 0) {
+      var cap = DEMO_CAPACITADORES.filter(function(c) { return c.id === row.capacitador_id; })[0];
+      out = Object.assign({}, out, { capacitadores: cap ? { nombre: cap.nombre } : null });
+    }
+    if (table === 'cvs' && row.posible_duplicado_de) {
+      out = Object.assign({}, out, { original: DEMO_CVS.filter(function(c) { return c.id === row.posible_duplicado_de; })[0] || null });
+    }
+    if (table === 'cv_matches') {
+      out = Object.assign({}, out, { cvs: DEMO_CVS.filter(function(c) { return c.id === row.cv_id; })[0] || null });
+    }
+    return out;
+  }
+  function _resolveQuery(table, rowsRef, st) {
+    if (st.op === 'insert') {
+      var rows = Array.isArray(st.payload) ? st.payload : [st.payload];
+      var extra = { created_at: new Date().toISOString() };
+      if (table === 'log_eliminaciones') extra.eliminado_at = new Date().toISOString();
+      var inserted = rows.map(function(p) { return Object.assign({ id: _genId(table) }, extra, p); });
+      inserted.forEach(function(r) { rowsRef.push(r); });
+      return { data: st.single ? inserted[0] : inserted, error: null };
+    }
+    if (st.op === 'upsert') {
+      var keyFields = (st.onConflict || 'id').split(',');
+      var existing = rowsRef.filter(function(r) { return keyFields.every(function(k) { return r[k] === st.payload[k]; }); })[0];
+      if (existing) { Object.assign(existing, st.payload); return { data: [existing], error: null }; }
+      var row = Object.assign({ id: _genId(table) }, st.payload);
+      rowsRef.push(row);
+      return { data: [row], error: null };
+    }
+    if (st.op === 'update') {
+      var matched = rowsRef.filter(function(r) { return _matchesFilters(r, st.filters); });
+      matched.forEach(function(r) { Object.assign(r, st.payload); });
+      return { data: matched, error: null };
+    }
+    if (st.op === 'delete') {
+      var toDel = rowsRef.filter(function(r) { return _matchesFilters(r, st.filters); });
+      toDel.forEach(function(r) { var i = rowsRef.indexOf(r); if (i >= 0) rowsRef.splice(i, 1); });
+      return { data: null, error: null };
+    }
+    var out = rowsRef.filter(function(r) { return _matchesFilters(r, st.filters); }).map(function(r) { return _joinRow(table, r, st.selectStr); });
+    st.orders.slice().reverse().forEach(function(o) {
+      out.sort(function(a, b) { if (a[o.field] === b[o.field]) return 0; var c = a[o.field] > b[o.field] ? 1 : -1; return o.asc ? c : -c; });
+    });
+    if (st.limitN != null) out = out.slice(0, st.limitN);
+    if (st.countOpt) return { data: null, error: null, count: out.length };
+    if (st.single) return out.length ? { data: out[0], error: null } : { data: null, error: { message: 'No encontrado' } };
+    if (st.maybeSingle) return { data: out[0] || null, error: null };
+    return { data: out, error: null };
+  }
+  function _makeQuery(table) {
+    var rowsRef = DEMO_TABLES[table] || [];
+    var st = { filters: [], orders: [], limitN: null, single: false, maybeSingle: false, countOpt: false, op: null, payload: null, onConflict: null, selectStr: '' };
+    var api = {
+      select: function(str, opts) { st.selectStr = str || ''; if (opts && opts.count === 'exact') st.countOpt = true; return api; },
+      eq: function(field, val) { st.filters.push({ t: 'eq', field: field, val: val }); return api; },
+      neq: function(field, val) { st.filters.push({ t: 'neq', field: field, val: val }); return api; },
+      gte: function(field, val) { st.filters.push({ t: 'gte', field: field, val: val }); return api; },
+      lte: function(field, val) { st.filters.push({ t: 'lte', field: field, val: val }); return api; },
+      gt: function(field, val) { st.filters.push({ t: 'gt', field: field, val: val }); return api; },
+      lt: function(field, val) { st.filters.push({ t: 'lt', field: field, val: val }); return api; },
+      in: function(field, vals) { st.filters.push({ t: 'in', field: field, vals: vals }); return api; },
+      ilike: function(field, pattern) { st.filters.push({ t: 'ilike', field: field, pattern: pattern }); return api; },
+      not: function(field, op2, val) { if (op2 === 'is' && val === null) st.filters.push({ t: 'not-is-null', field: field }); return api; },
+      order: function(field, opts) { st.orders.push({ field: field, asc: !(opts && opts.ascending === false) }); return api; },
+      limit: function(n) { st.limitN = n; return api; },
+      single: function() { st.single = true; return api; },
+      maybeSingle: function() { st.maybeSingle = true; return api; },
+      insert: function(payload) { st.op = 'insert'; st.payload = payload; return api; },
+      update: function(payload) { st.op = 'update'; st.payload = payload; return api; },
+      upsert: function(payload, opts) { st.op = 'upsert'; st.payload = payload; st.onConflict = opts && opts.onConflict; return api; },
+      delete: function() { st.op = 'delete'; return api; },
+      then: function(resolve) {
+        return new Promise(function(res) { setTimeout(function() { res(resolve(_resolveQuery(table, rowsRef, st))); }, 0); });
+      },
+    };
+    return api;
+  }
+  function _channelMock() { var c = { on: function() { return c; }, subscribe: function() { return c; } }; return c; }
+  var supa = {
+    from: _makeQuery,
+    channel: _channelMock,
+    removeChannel: function() {},
+    auth: {
+      signInWithPassword: function() { return Promise.resolve({ error: { message: 'Usa los accesos de demo en la pantalla de login' } }); },
+      getUser: function() { return Promise.resolve({ data: { user: null } }); },
+      getSession: function() { return Promise.resolve({ data: { session: null } }); },
+      signOut: function() { return Promise.resolve({ error: null }); },
+      verifyOtp: function() { return Promise.resolve({ error: { message: 'No disponible en la demo' } }); },
+    },
+  };
+
+  function loginComoDemo(rol) {
+    var mapId = { admin: 'admin-demo', supervisor: 'supervisor-demo', ejecutivo: 'ejecutivo-demo' };
+    usuarioActual = DEMO_USUARIOS.filter(function(u) { return u.id === mapId[rol]; })[0];
+
+    document.getElementById('pantalla-login').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('user-nombre').textContent = usuarioActual.nombre;
+    document.getElementById('user-rol').textContent = etiquetaRol(usuarioActual.rol);
+    document.getElementById('user-avatar').textContent = usuarioActual.nombre.substring(0, 2).toUpperCase();
+
+    cargarPermisos();
+    cargarAreasCursos(function() { cargarTurnos(); });
+  }
 
   var usuarioActual = null;   // fila de la tabla usuarios
   var permisosActuales = {};  // { clave: {ejecutivo,supervisor,admin} }
@@ -4530,23 +4949,34 @@
     });
   }
 
+  // DEMO: en el sistema original esto llama a la Edge Function "match-course".
+  // Acá se simula el mismo criterio (palabras clave) en el navegador.
   function buscarCandidatosIdea(id) {
     var btn = document.getElementById('btn-buscar-cand-' + id);
     if (btn) { btn.disabled = true; btn.textContent = 'Buscando...'; }
-    fetch(SUPABASE_URL + '/functions/v1/match-course', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
-      body: JSON.stringify({ curso_id: id }),
-    }).then(function(r) { return r.json(); }).then(function(data) {
+    setTimeout(function() {
+      var idea = _ideasCursosFilas[id] || DEMO_IDEAS_CURSOS.filter(function(x) { return x.id === id; })[0];
+      if (!idea) return;
+      var texto = (idea.nombre || '') + ' ' + (idea.detalle || '') + ' ' + (idea.contenido || '');
+      var descartadas = DEMO_PALABRAS_DESCARTADAS.map(function(p) { return p.palabra_norm; });
+      var palabras = _tokenizarBusquedaCv(texto).filter(function(p) { return descartadas.indexOf(p) < 0; });
+      var rechazados = DEMO_CV_MATCHES_RECHAZADOS.filter(function(r) { return r.curso_id === id; }).map(function(r) { return r.cv_id; });
+      for (var i = DEMO_CV_MATCHES.length - 1; i >= 0; i--) { if (DEMO_CV_MATCHES[i].curso_id === id) DEMO_CV_MATCHES.splice(i, 1); }
+      var encontrados = 0;
+      DEMO_CVS.forEach(function(cv) {
+        if (!cv.texto_extraido || rechazados.indexOf(cv.id) >= 0) return;
+        var hay = cv.texto_extraido.toLowerCase();
+        var coincidencias = palabras.filter(function(p) { return hay.indexOf(p) >= 0; });
+        if (coincidencias.length) {
+          DEMO_CV_MATCHES.push({ curso_id: id, cv_id: cv.id, similarity_score: Math.min(0.95, 0.4 + coincidencias.length * 0.15), palabras_encontradas: coincidencias, motivo: null });
+          encontrados++;
+        }
+      });
       if (btn) { btn.disabled = false; btn.innerHTML = '&#8635; Buscar candidatos ahora'; }
-      if (data.error) { mostrarToast('Error: ' + data.error); return; }
-      mostrarToast('Candidatos encontrados: ' + data.matches_encontrados);
+      mostrarToast('Candidatos encontrados: ' + encontrados);
       var box = document.getElementById('matches-idea-' + id);
       if (box) { box.style.display = 'block'; cargarMatchesIdea(id); }
-    }).catch(function(e) {
-      if (btn) { btn.disabled = false; btn.innerHTML = '&#8635; Buscar candidatos ahora'; }
-      mostrarToast('Error: ' + e);
-    });
+    }, 400);
   }
 
   function editarIdeaCursoInline(id) {
